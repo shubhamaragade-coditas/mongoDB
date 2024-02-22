@@ -1,0 +1,152 @@
+Create Database and Collections:
+Create a new MongoDB database named company.
+use company
+Within the company database, create three collections: employees, financial_details, and projects.
+
+Insert at least 5 documents into the employees collection, financial_details collection, and projects collection. Each collection should represent employees, financial details, and projects respectively.
+employees documents should include fields such as name, age, position, and other employee-related details.
+db.employees.insertMany([
+  {name: "John Doe", age: 28, position: "Software Engineer"},
+  {name: "Jane Smith", age: 32, position: "Project Manager"},
+  {name: "Alice Johnson", age: 45, position: "Department Head"},
+  {name: "Bob Brown", age: 25, position: "Intern"}
+])
+financial_details documents should include fields such as employee_id (reference to an employee), salary, annual_income, and expenses.
+db.financial_details.insertMany([
+  {employee_id: 1, salary: 70000, annual_income: 90000, expenses: 30000},
+  {employee_id: 2, salary: 85000, annual_income: 110000, expenses: 25000},
+  {employee_id: 3, salary: 105000, annual_income: 135000, expenses: 30000},
+  {employee_id: 4, salary: 50000, annual_income: 60000, expenses: 10000},
+  {employee_id: 5, salary: 95000, annual_income: 120000, expenses: 25000}
+])
+projects documents should include fields such as project_name, employee_id (referring to an employee), and status.
+db.projects.insertMany([
+  {project_name: "Project Alpha", employee_id: 1, status: "In Progress"},
+  {project_name: "Project Beta", employee_id: 2, status: "Completed"},
+  {project_name: "Project Gamma", employee_id: 3, status: "In Progress"},
+  {project_name: "Project Delta", employee_id: 4, status: "Not Started"},
+  {project_name: "Project Epsilon", employee_id: 5, status: "Completed"}
+])
+Read Operation:
+Write a query to retrieve all employees who are above 30 years old from the employees collection.
+db.employees.find({age: {$gt: 30}})
+Update Operation:
+Choose an employee and update their position to a higher role in the employees collection.
+db.employees.updateOne(
+  {name: "Jane Smith"},
+  {$set: {position: "Senior Project Manager"}}
+)
+Delete Operation:
+Delete a project from the projects collection based on the project name.
+db.projects.deleteOne({project_name: "Project Delta"})
+
+
+
+Task 2: Aggregation
+Aggregation Pipeline:
+Create an aggregation pipeline that calculates the average salary for employees in each position from the financial_details collection.
+[
+    {
+        '$lookup': {
+            'from': 'employees',
+            'localField': 'employee_id',
+            'foreignField': 'employee_id',
+            'as': 'employee_details'
+        }
+    }, {
+        '$unwind': {
+            'path': '$employee_details'
+        }
+    }, {
+        '$group': {
+            '_id': '$employee_details.position',
+            'average_salary': {
+                '$avg': '$salary'
+            }
+        }
+    }
+]
+
+
+
+Group and Count:
+Write an aggregation query to group financial details by the employee's age from the financial_details collection and count the number of employees in each age group.
+
+db.getCollection('employees').aggregate(
+  [
+    {
+      $lookup: {
+        from: 'financial_details',
+        localField: 'employee_id',
+        foreignField: 'employee_id',
+        as: 'result'
+      }
+    },
+    { $unwind: { path: '$result' } },
+    {
+      $group: {
+        _id: '$age',
+        count: { $count: {} }
+      }
+    }
+  ],
+  { maxTimeMS: 60000, allowDiskUse: true }
+);
+
+
+
+Sorting:
+Sort the projects based on their status in descending order from the projects collection.
+
+[
+    {
+        '$sort': {
+            'status': -1
+        }
+    }
+]
+
+
+
+Projecting Fields:
+Create an aggregation query to project only the name and position fields for employees who have an annual income greater than a specified value from the employees and financial_details collections.
+ [
+    {
+      $lookup: {
+        from: 'financial_details',
+        localField: 'employee_id',
+        foreignField: 'employee_id',
+        as: 'result'
+      }
+    },
+    { $unwind: { path: '$result' } },
+    {
+      $project: {
+        position: 1,
+        _id: 0,
+        name: 1,
+        annual_income: '$result.annual_income'
+      }
+    },
+    { $match: { annual_income: { $gt: 110000 } } }
+]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
